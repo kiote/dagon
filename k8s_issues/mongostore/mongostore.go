@@ -27,11 +27,34 @@ func InsertIssues(client *mongo.Client, dbName, collectionName string, issues []
 	collection := client.Database(dbName).Collection(collectionName)
 
 	for _, issue := range issues {
-		_, err := collection.InsertOne(context.Background(), issue)
+		exists, err := IssueExists(client, dbName, collectionName, issue.URL)
 		if err != nil {
 			return err
+		}
+		if exists {
+			continue
+		}
+		_, err2 := collection.InsertOne(context.Background(), issue)
+		if err2 != nil {
+			return err2
 		}
 	}
 
 	return nil
+}
+
+func IssueExists(client *mongo.Client, dbName, collectionName, url string) (bool, error) {
+	collection := client.Database(dbName).Collection(collectionName)
+
+	filter := map[string]string{"url": url}
+	var result models.Issue
+	err := collection.FindOne(context.Background(), filter).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
 }
