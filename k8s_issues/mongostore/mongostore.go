@@ -5,6 +5,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	bson "go.mongodb.org/mongo-driver/bson"
 
 	"k8s_issues/models"
 )
@@ -57,4 +58,15 @@ func IssueExists(client *mongo.Client, dbName, collectionName, url string) (bool
 	}
 
 	return true, nil
+}
+
+func CountIssues(client *mongo.Client, dbName, collectionName string) (int64, error) {
+	collection := client.Database(dbName).Collection(collectionName)
+
+	count, err := collection.CountDocuments(context.Background(), bson.D{})
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

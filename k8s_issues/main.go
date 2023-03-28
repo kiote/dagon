@@ -8,6 +8,7 @@ import (
 
 	"k8s_issues/httpclient"
 	"k8s_issues/mongostore"
+	"k8s_issues/telegram"
 )
 
 func main() {
@@ -38,7 +39,31 @@ func main() {
 		log.Fatalf("Error inserting issues: %v", err)
 	}
 
-	fmt.Println("Issues successfully inserted into MongoDB.")
+	count, err2 := mongostore.CountIssues(mongoClient, dbName, collectionName)
+	if err2 != nil {
+		log.Fatalf("Error counting issues: %v", err2)
+	}
+	fmt.Printf("Total number of issues: %d\n", count)
+
+	// if total number of issues > 21, send a message to telegram
+	// since that means we have a new issue
+	if count > 21 {
+		// send message to telegram
+		botToken := os.Getenv("TELEGRAM_BOT_TOKEN")
+		if botToken == "" {
+			log.Fatalf("TELEGRAM_BOT_TOKEN environment variable not set")
+		}
+		chatID := os.Getenv("TELEGRAM_CHAT_ID")
+		if chatID == "" {
+			log.Fatalf("TELEGRAM_CHAT_ID environment variable not set")
+		}
+		err3 := telegram.SendMessage(botToken, chatID, "There is a new issue!")
+		if err3 != nil {
+			log.Fatalf("Error sending message: %v", err)
+		} else {
+			log.Println("Message sent successfully!")
+		}
+	}
 }
 
 
