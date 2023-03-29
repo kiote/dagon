@@ -5,6 +5,7 @@ import (
 	"log"
     "os"
     "context"
+	"net/http"
 
 	"k8s_issues/httpclient"
 	"k8s_issues/mongostore"
@@ -12,6 +13,17 @@ import (
 )
 
 func main() {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "Dummy HTTP server")
+		go getIssues()
+	})
+	fmt.Printf("Starting server on port %s...\n", 8080)
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		panic(err)
+	}
+}
+
+func getIssues() {
 	owner := "kubernetes"
 	repo := "kubernetes"
 	tag := "good first issue"
