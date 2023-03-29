@@ -17,6 +17,9 @@ func main() {
 		fmt.Fprint(w, "Dummy HTTP server")
 		go getIssues()
 	})
+	http.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "Health check")
+	})
 	fmt.Printf("Starting server on port %s...\n", 8080)
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
