@@ -6,6 +6,7 @@ import (
     "os"
     "context"
 	"net/http"
+	"time"
 
 	"k8s_issues/httpclient"
 	"k8s_issues/mongostore"
@@ -23,6 +24,17 @@ func main() {
 	fmt.Printf("Starting server on port %s...\n", 8080)
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
+	}
+
+	// call getIssues() every hour
+	workerTicker := time.NewTicker(time.Hour)
+	defer workerTicker.Stop()
+
+	for {
+		select {
+		case <-workerTicker.C:
+			go sendRequestToWorker() // Send request to the worker
+		}
 	}
 }
 
@@ -78,6 +90,14 @@ func getIssues() {
 		} else {
 			log.Println("Message sent successfully!")
 		}
+	}
+}
+
+func sendRequestToWorker() {
+	// Send request to the worker
+	_, err := http.Get("http://localhost:8080")
+	if err != nil {
+		log.Fatalf("Error sending request to worker: %v", err)
 	}
 }
 
